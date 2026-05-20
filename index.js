@@ -131,7 +131,7 @@ async function poll() {
 
       for (const sub of cfg.reddits) {
         try {
-          const items = await rss(`r/${sub}`, `https://rsshub.rssforever.com/reddit/subreddit/${sub}`)
+          const items = await rss(`r/${sub}`, `https://rsshub.app/reddit/subreddit/${sub}`)
           for (const item of items.reverse()) await send(channel, item)
         } catch (err) {
           console.error(err.message)
