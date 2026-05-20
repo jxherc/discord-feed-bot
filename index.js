@@ -11,39 +11,46 @@ const channels = [
   {
     id: process.env.media_channel_id,
     name: 'media',
-    reddits: ['worldnews', 'mildlyinteresting', 'explainlikeimfive', 'funny', 'askreddit'],
     feeds: [
       ['bbc news', 'https://feeds.bbci.co.uk/news/rss.xml'],
       ['ap news', 'https://rsshub.rssforever.com/apnews/topics/apf-topnews'],
+      ['reuters', 'https://feeds.reuters.com/reuters/topNews'],
+      ['the guardian', 'https://www.theguardian.com/world/rss'],
+      ['npr', 'https://feeds.npr.org/1001/rss.xml'],
       ['motorsport.com', 'https://www.motorsport.com/rss/all/news/']
     ]
   },
   {
     id: '1506599498393059448',
     name: 'tech',
-    reddits: ['technology', 'programming', 'MachineLearning'],
     feeds: [
       ['the verge', 'https://www.theverge.com/rss/index.xml'],
       ['ars technica', 'https://feeds.arstechnica.com/arstechnica/index'],
+      ['wired', 'https://www.wired.com/feed/rss'],
+      ['techcrunch', 'https://techcrunch.com/feed/'],
       ['hacker news', 'https://hnrss.org/frontpage']
     ]
   },
   {
     id: process.env.games_channel_id,
     name: 'games',
-    reddits: ['gaming', 'piracy'],
     feeds: [
       ['ign', 'https://www.ign.com/rss/v2/articles/feed'],
-      ['kotaku', 'https://kotaku.com/rss']
+      ['kotaku', 'https://kotaku.com/rss'],
+      ['polygon', 'https://www.polygon.com/rss/index.xml'],
+      ['rock paper shotgun', 'https://www.rockpapershotgun.com/feed'],
+      ['eurogamer', 'https://www.eurogamer.net/feed']
     ]
   },
   {
     id: process.env.music_channel_id,
     name: 'music',
-    reddits: ['music', 'ifyoulikeblank'],
     feeds: [
       ['pitchfork', 'https://pitchfork.com/rss/news/'],
-      ['billboard', 'https://www.billboard.com/feed/']
+      ['billboard', 'https://www.billboard.com/feed/'],
+      ['nme', 'https://www.nme.com/feed'],
+      ['stereogum', 'https://www.stereogum.com/feed/'],
+      ['consequence of sound', 'https://consequenceofsound.net/feed']
     ]
   }
 ]
@@ -128,15 +135,6 @@ async function poll() {
     for (const cfg of channels) {
       const channel = await client.channels.fetch(cfg.id)
       if (!channel) continue
-
-      for (const sub of cfg.reddits) {
-        try {
-          const items = await rss(`r/${sub}`, `https://rsshub.app/reddit/subreddit/${sub}`)
-          for (const item of items.reverse()) await send(channel, item)
-        } catch (err) {
-          console.error(err.message)
-        }
-      }
 
       for (const feed of cfg.feeds) {
         try {
