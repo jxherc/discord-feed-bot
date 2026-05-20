@@ -11,13 +11,21 @@ const channels = [
   {
     id: process.env.media_channel_id,
     name: 'media',
-    reddits: ['worldnews', 'mildlyinteresting', 'explainlikeimfive', 'funny', 'askreddit', 'technology'],
+    reddits: ['worldnews', 'mildlyinteresting', 'explainlikeimfive', 'funny', 'askreddit'],
     feeds: [
       ['bbc news', 'https://feeds.bbci.co.uk/news/rss.xml'],
       ['ap news', 'https://rsshub.rssforever.com/apnews/topics/apf-topnews'],
+      ['motorsport.com', 'https://www.motorsport.com/rss/all/news/']
+    ]
+  },
+  {
+    id: '1506599498393059448',
+    name: 'tech',
+    reddits: ['technology', 'programming', 'MachineLearning'],
+    feeds: [
       ['the verge', 'https://www.theverge.com/rss/index.xml'],
       ['ars technica', 'https://feeds.arstechnica.com/arstechnica/index'],
-      ['motorsport.com', 'https://www.motorsport.com/rss/all/news/']
+      ['hacker news', 'https://hnrss.org/frontpage']
     ]
   },
   {
