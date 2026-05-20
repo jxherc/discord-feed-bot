@@ -81,13 +81,24 @@ function reddit_image(data) {
 }
 
 async function reddit(sub) {
-  const url = `https://www.reddit.com/r/${sub}/new/.json?limit=5&raw_json=1`
-  const res = await fetch(url, {
-    headers: {
-      'accept': 'application/json',
-      'user-agent': 'discord-feed-bot/1.0 by jxherc'
-    }
-  })
+  const paths = [
+    `https://www.reddit.com/r/${sub}/new/.json?limit=5&raw_json=1`,
+    `https://old.reddit.com/r/${sub}/new/.json?limit=5&raw_json=1`
+  ]
+
+  let res
+  for (const url of paths) {
+    res = await fetch(url, {
+      redirect: 'follow',
+      headers: {
+        'accept': 'application/json,text/plain,*/*',
+        'accept-language': 'en-US,en;q=0.9',
+        'user-agent': 'Mozilla/5.0 (compatible; discord-feed-bot/1.0; +https://github.com/jxherc/discord-feed-bot)'
+      }
+    })
+
+    if (res.ok) break
+  }
 
   if (!res.ok) throw new Error(`reddit ${sub}: ${res.status}`)
 
@@ -165,7 +176,7 @@ async function poll() {
   }
 }
 
-client.once('ready', async () => {
+client.once('clientReady', async () => {
   console.log(`logged in as ${client.user.tag}`)
   await load_posted()
   await poll()
