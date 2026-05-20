@@ -5,7 +5,7 @@ import { promises as fs } from 'node:fs'
 
 const poll_ms = 60 * 60 * 1000
 const store_file = new URL('./posted.json', import.meta.url)
-const parser = new Parser()
+const parser = new Parser({ customFields: { item: [['media:thumbnail', 'media:thumbnail']] } })
 
 const channels = [
   {
@@ -127,19 +127,25 @@ function rss_image(item) {
   if (Array.isArray(media)) return media.find(x => x?.$?.url)?.$.url
   if (media?.$?.url) return media.$.url
 
+  const thumb = item['media:thumbnail']
+  if (Array.isArray(thumb)) return thumb.find(x => x?.$?.url)?.$.url
+  if (thumb?.$?.url) return thumb.$.url
+  if (typeof thumb === 'string' && thumb.startsWith('http')) return thumb
+
   const html = item['content:encoded'] || item.content || ''
   return html.match(/<img[^>]+src=["']([^"']+)/i)?.[1]
 }
 
 async function rss(name, url) {
   const feed = await parser.parseURL(url)
+  const feed_image = feed.image?.url
 
   return feed.items.slice(0, 5).map(item => ({
     id: `rss:${item.guid || item.link}`,
     title: item.title || name,
     source: name,
     url: item.link,
-    image: rss_image(item)
+    image: rss_image(item) || feed_image
   })).filter(item => item.url)
 }
 
