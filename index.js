@@ -3,7 +3,7 @@ import { Client, EmbedBuilder, GatewayIntentBits } from 'discord.js'
 import Parser from 'rss-parser'
 import { promises as fs } from 'node:fs'
 
-const poll_ms = 15 * 60 * 1000
+const poll_ms = 60 * 60 * 1000
 const store_file = new URL('./posted.json', import.meta.url)
 const parser = new Parser()
 
@@ -14,7 +14,7 @@ const channels = [
     reddits: ['worldnews', 'mildlyinteresting', 'explainlikeimfive', 'funny', 'askreddit', 'technology'],
     feeds: [
       ['bbc news', 'https://feeds.bbci.co.uk/news/rss.xml'],
-      ['ap news', 'https://apnews.com/hub/ap-top-news?output=atom'],
+      ['ap news', 'https://rsshub.rssforever.com/apnews/topics/apf-topnews'],
       ['the verge', 'https://www.theverge.com/rss/index.xml'],
       ['ars technica', 'https://feeds.arstechnica.com/arstechnica/index'],
       ['motorsport.com', 'https://www.motorsport.com/rss/all/news/']
@@ -25,7 +25,7 @@ const channels = [
     name: 'games',
     reddits: ['gaming', 'piracy'],
     feeds: [
-      ['ign', 'https://feeds.ign.com/ign/all'],
+      ['ign', 'https://www.ign.com/rss/v2/articles/feed'],
       ['kotaku', 'https://kotaku.com/rss']
     ]
   },
@@ -62,17 +62,31 @@ async function save_posted() {
 }
 
 function embed(item) {
-  return new EmbedBuilder()
+  const msg = new EmbedBuilder()
     .setTitle(item.title.slice(0, 256))
     .setURL(item.url)
     .setDescription(item.source)
     .setColor(0x2f3136)
+
+  if (item.image) msg.setImage(item.image)
+  return msg
+}
+
+function reddit_image(data) {
+  const preview = data.preview?.images?.[0]?.source?.url
+  if (preview) return preview.replaceAll('&amp;', '&')
+
+  if (data.post_hint === 'image' && data.url?.startsWith('http')) return data.url
+  if (data.thumbnail?.startsWith('http')) return data.thumbnail
 }
 
 async function reddit(sub) {
-  const url = `https://www.reddit.com/r/${sub}/new.json?limit=5`
+  const url = `https://www.reddit.com/r/${sub}/new/.json?limit=5&raw_json=1`
   const res = await fetch(url, {
-    headers: { 'user-agent': 'discord-feed-bot/1.0' }
+    headers: {
+      'accept': 'application/json',
+      'user-agent': 'discord-feed-bot/1.0 by jxherc'
+    }
   })
 
   if (!res.ok) throw new Error(`reddit ${sub}: ${res.status}`)
@@ -82,8 +96,20 @@ async function reddit(sub) {
     id: `reddit:${data.name}`,
     title: data.title,
     source: `r/${sub}`,
-    url: `https://www.reddit.com${data.permalink}`
+    url: `https://www.reddit.com${data.permalink}`,
+    image: reddit_image(data)
   }))
+}
+
+function rss_image(item) {
+  if (item.enclosure?.type?.startsWith('image/') && item.enclosure.url) return item.enclosure.url
+
+  const media = item['media:content']
+  if (Array.isArray(media)) return media.find(x => x?.$?.url)?.$.url
+  if (media?.$?.url) return media.$.url
+
+  const html = item['content:encoded'] || item.content || ''
+  return html.match(/<img[^>]+src=["']([^"']+)/i)?.[1]
 }
 
 async function rss(name, url) {
@@ -93,7 +119,8 @@ async function rss(name, url) {
     id: `rss:${item.guid || item.link}`,
     title: item.title || name,
     source: name,
-    url: item.link
+    url: item.link,
+    image: rss_image(item)
   })).filter(item => item.url)
 }
 
