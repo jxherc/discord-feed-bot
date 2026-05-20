@@ -55,12 +55,15 @@ const client = new Client({
 let posted = new Set()
 let polling = false
 
+let is_first_run = false
+
 async function load_posted() {
   try {
     const raw = await fs.readFile(store_file, 'utf8')
     posted = new Set(JSON.parse(raw))
   } catch {
     posted = new Set()
+    is_first_run = true
   }
 }
 
@@ -90,8 +93,8 @@ function reddit_image(data) {
 
 async function reddit(sub) {
   const paths = [
-    `https://www.reddit.com/r/${sub}/new/.json?limit=5&raw_json=1`,
-    `https://old.reddit.com/r/${sub}/new/.json?limit=5&raw_json=1`
+    `https://www.reddit.com/r/${sub}/new/.json?limit=3&raw_json=1`,
+    `https://old.reddit.com/r/${sub}/new/.json?limit=3&raw_json=1`
   ]
 
   let res
@@ -140,7 +143,7 @@ async function rss(name, url) {
   const feed = await parser.parseURL(url)
   const feed_image = feed.image?.url
 
-  return feed.items.slice(0, 5).map(item => ({
+  return feed.items.slice(0, 3).map(item => ({
     id: `rss:${item.guid || item.link}`,
     title: item.title || name,
     source: name,
@@ -152,7 +155,7 @@ async function rss(name, url) {
 async function send(channel, item) {
   if (posted.has(item.id)) return
 
-  await channel.send({ embeds: [embed(item)] })
+  if (!is_first_run) await channel.send({ embeds: [embed(item)] })
   posted.add(item.id)
 }
 
@@ -194,6 +197,10 @@ client.once('clientReady', async () => {
   console.log(`logged in as ${client.user.tag}`)
   await load_posted()
   await poll()
+  if (is_first_run) {
+    console.log('first run: seeded posted list, no messages sent')
+    is_first_run = false
+  }
   setInterval(poll, poll_ms)
 })
 
