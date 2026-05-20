@@ -83,45 +83,6 @@ function embed(item) {
   return msg
 }
 
-function reddit_image(data) {
-  const preview = data.preview?.images?.[0]?.source?.url
-  if (preview) return preview.replaceAll('&amp;', '&')
-
-  if (data.post_hint === 'image' && data.url?.startsWith('http')) return data.url
-  if (data.thumbnail?.startsWith('http')) return data.thumbnail
-}
-
-async function reddit(sub) {
-  const paths = [
-    `https://www.reddit.com/r/${sub}/new/.json?limit=3&raw_json=1`,
-    `https://old.reddit.com/r/${sub}/new/.json?limit=3&raw_json=1`
-  ]
-
-  let res
-  for (const url of paths) {
-    res = await fetch(url, {
-      redirect: 'follow',
-      headers: {
-        'accept': 'application/json,text/plain,*/*',
-        'accept-language': 'en-US,en;q=0.9',
-        'user-agent': 'Mozilla/5.0 (compatible; discord-feed-bot/1.0; +https://github.com/jxherc/discord-feed-bot)'
-      }
-    })
-
-    if (res.ok) break
-  }
-
-  if (!res.ok) throw new Error(`reddit ${sub}: ${res.status}`)
-
-  const json = await res.json()
-  return json.data.children.map(({ data }) => ({
-    id: `reddit:${data.name}`,
-    title: data.title,
-    source: `r/${sub}`,
-    url: `https://www.reddit.com${data.permalink}`,
-    image: reddit_image(data)
-  }))
-}
 
 function rss_image(item) {
   if (item.enclosure?.type?.startsWith('image/') && item.enclosure.url) return item.enclosure.url
@@ -170,7 +131,7 @@ async function poll() {
 
       for (const sub of cfg.reddits) {
         try {
-          const items = await reddit(sub)
+          const items = await rss(`r/${sub}`, `https://www.reddit.com/r/${sub}/new.rss`)
           for (const item of items.reverse()) await send(channel, item)
         } catch (err) {
           console.error(err.message)
