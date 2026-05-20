@@ -1,0 +1,18 @@
+{
+  "name": "discord-feed-bot",
+  "version": "1.0.0",
+  "description": "small discord bot for posting reddit and rss updates",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.16.3",
+    "dotenv": "^16.4.7",
+    "rss-parser": "^3.13.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
