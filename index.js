@@ -3,7 +3,7 @@ import { Client, EmbedBuilder, GatewayIntentBits } from 'discord.js'
 import Parser from 'rss-parser'
 import { promises as fs } from 'node:fs'
 
-const poll_ms = 60 * 60 * 1000
+const poll_ms = 6 * 60 * 60 * 1000
 const store_file = new URL('./posted.json', import.meta.url)
 const parser = new Parser({ customFields: { item: [['media:thumbnail', 'media:thumbnail']] } })
 
